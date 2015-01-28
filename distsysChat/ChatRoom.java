@@ -128,6 +128,7 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	private JPanel ChatRoomPanel(){
 		ChatRoomPanel = new JPanel(new BorderLayout());
 		
+		/** 聊天面板,包括消息显示文本域,聊天消息输入框和发送按钮 */
 		textAreaMessageDisplay = new JTextArea(16, 32);
 		textAreaMessageDisplay.setLineWrap(true);
 		textAreaMessageDisplay.setEditable(false);
