@@ -94,6 +94,7 @@ public class MainWindow extends JFrame implements  ActionListener{
 								,Settings.GROUPINFO_BROADCAST_IP);
 						
 						new ChatRoom(newGroup,true);
+						reader.stop();
 					} catch (UnknownHostException e) {
 						e.printStackTrace();
 					}
@@ -109,6 +110,7 @@ public class MainWindow extends JFrame implements  ActionListener{
 		else if (mainEvent.getSource() == buttonJoinGroup){
 			if(selectGroupINFO != null){
 				new ChatRoom(selectGroupINFO,false);
+				reader.stop();
 			}else{
 				JOptionPane.showMessageDialog(this,StringResource.groupSelectError,
 						StringResource.errorMessageDialogTittle,JOptionPane.ERROR_MESSAGE); 

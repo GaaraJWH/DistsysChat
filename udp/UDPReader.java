@@ -41,7 +41,9 @@ public class UDPReader extends Thread{
 	
 	public void setOrderType(String orderType){
 		this.orderType  = orderType;
-		this.dlmChatGroup.clear();
+		if(dlmChatGroup != null){
+			this.dlmChatGroup.clear();
+		}
 	}
 	
 	public void run() {
