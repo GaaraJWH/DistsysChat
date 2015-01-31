@@ -8,6 +8,7 @@ import java.util.StringTokenizer;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
+import orderType.TotalOrder;
 import resource.Settings;
 import util.Command;
 import util.GroupINFO;
@@ -21,10 +22,11 @@ public class UDPReader extends Thread{
 	
 	private MulticastSocket multSocket = null;
 	private DefaultListModel<GroupINFO> dlmChatGroup = null;
-	private JTextArea textAreaMessageDisplay = null;
 	private String orderType = null;
 	private GroupINFO groupINFO = null;
 	private boolean isLeader;
+	private TotalOrder totalOrder = null;
+	private DefaultListModel<MemberINFO> dlmMembers = null;
 	
 	public UDPReader(MulticastSocket multSocket,DefaultListModel<GroupINFO> dlmChatGroup, String orderType){
 		this.multSocket = multSocket;
@@ -32,11 +34,19 @@ public class UDPReader extends Thread{
 		this.orderType  = orderType;
 	}
 	
-	public UDPReader(MulticastSocket multSocket, JTextArea textAreaMessageDisplay,GroupINFO groupINFO, boolean isLeader) {
+	public UDPReader(MulticastSocket multSocket , GroupINFO groupINFO, boolean isLeader) {
 		this.multSocket = multSocket;
-		this.textAreaMessageDisplay = textAreaMessageDisplay;
 		this.groupINFO  = groupINFO;
 		this.isLeader =isLeader;
+	}
+	
+	public UDPReader(MulticastSocket multSocket ,DefaultListModel<MemberINFO> dlmMembers,
+			TotalOrder totalOrder, GroupINFO groupINFO, boolean isLeader) {
+		this.multSocket = multSocket;
+		this.groupINFO  = groupINFO;
+		this.totalOrder  = totalOrder;
+		this.isLeader =isLeader;
+		this.dlmMembers = dlmMembers;
 	}
 	
 	public void setOrderType(String orderType){
@@ -140,11 +150,17 @@ public class UDPReader extends Thread{
 			}else if(recvMsg.startsWith(Command.ChatMSG_StartWith)){
 				ST = new StringTokenizer(recvMsg,Command.MSG_delimiter);
 				ST.nextToken();
-				if( ST.nextToken().equals(Command.ChatMSG_Command_ChatMessage) ){
-					String textMSG = ST.nextToken();
-					if(textAreaMessageDisplay != null){
-						textAreaMessageDisplay.append(textMSG+"\n");
-					}
+				String command = ST.nextToken();
+				if( command.equals(Command.ChatMSG_Command_ChatMessage)&&totalOrder != null){
+					int seqNum = Integer.valueOf(ST.nextToken()).intValue();
+                	String message = ST.nextToken();
+					totalOrder.DisplayMessage(seqNum, message);
+				}else if(command.equals(Command.ChatMSG_Command_NewMember) && dlmMembers != null){
+					String MemberName = ST.nextToken();
+                	String MemberIP = ST.nextToken();
+                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
+                	MemberINFO NewMember = new MemberINFO(MemberName,MemberIP,MemberPriority);
+					dlmMembers.addElement(NewMember);
 				}
 			}
 		}

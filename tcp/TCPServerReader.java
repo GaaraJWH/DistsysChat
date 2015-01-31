@@ -11,7 +11,6 @@ import java.util.StringTokenizer;
 import javax.swing.DefaultListModel;
 
 import orderType.TotalOrder;
-import resource.Settings;
 import util.Command;
 import util.GroupINFO;
 import util.MemberINFO;
@@ -33,7 +32,6 @@ public class TCPServerReader extends Thread{
         } catch (IOException e) {
         	e.printStackTrace();
         }
-        System.out.println("TCPServerReaderCreate  "+socket.toString()+"  "+output.toString()+"  "+input.toString());
     }
 	public void run(){
         try {
@@ -57,32 +55,30 @@ public class TCPServerReader extends Thread{
 				String command = ST.nextToken();
                 
                 if(command.equals(Command.Ask_Initial_INFO)){
-                	String newMemberName = ST.nextToken();
-                	String newMemberIP = ST.nextToken();
                 	groupINFO.MembersNumber++;
                 	groupINFO.MembersExpectPriority++;
+                	for(int i = 0;i<dlmMembers.size();i++){
+                		String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO
+                				+Command.MSG_delimiter+Command.Member_List+Command.MSG_delimiter
+                				+dlmMembers.get(i).toSendString();
+                    	output.println(msg);
+                    	output.flush();
+                	}
+                	
                 	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO+Command.MSG_delimiter
                 			+Command.Member_Priority+Command.MSG_delimiter+groupINFO.MembersExpectPriority
-                			+Command.MSG_delimiter+totalOrder.expectedSeqNum;
+                			+Command.MSG_delimiter+(totalOrder.expectedSeqNum+1);
                 	output.println(msg);
                 	output.flush();
-                	NewMember(newMemberName,newMemberIP);
                 	
-                }else if(command.equals(Command.Ask_Sequence)){
-                    output.println("Sequence#" );
+                	
+                }else if(command.equals(Command.Ask_SequenceNumber)){
+                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.SequenceNumber
+                			+Command.MSG_delimiter+(totalOrder.expectedSeqNum+1);
+                    output.println(msg);
                     output.flush();
                 }
         	}
         }
     }
-	private void NewMember(String newMemberName, String newMemberIP) {
-    	MemberINFO newMember = new MemberINFO(newMemberName,newMemberIP,groupINFO.MembersExpectPriority);
-    	dlmMembers.addElement(newMember);
-    	for(int i = 0;i<dlmMembers.size();i++){
-    		String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO+Command.MSG_delimiter
-        			+Command.Member_List+Command.MSG_delimiter+dlmMembers.get(i).toSendString();
-        	output.println(msg);
-        	output.flush();
-    	}
-	}
 }

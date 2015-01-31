@@ -75,33 +75,39 @@ public class ChatRoom extends JFrame implements  ActionListener{
 
 	private void CreatSocket() {
 		if(isLeader){
-	    	memberINFO = groupINFO.leaderINFO;
-	    	totalOrder = new TotalOrder(1);
-	    	try {
+			try {
 				MulticastSocket receive = new MulticastSocket(Settings.BROADCAST_PORT);
 				InetAddress multicastIP=InetAddress.getByName(Settings.GROUPINFO_BROADCAST_IP);
 				receive.joinGroup(multicastIP);
 				//receive.setLoopbackMode(false);//设置本MulticastSocket发送的数据报被回送到自身
-				groupINFOReader = new UDPReader(receive, textAreaMessageDisplay,this.groupINFO,this.isLeader);
+				groupINFOReader = new UDPReader(receive,this.groupINFO,this.isLeader);
 				groupINFOReader.start();
-				tcpServer = new TCPServer(dlmMembers,this.groupINFO,totalOrder);
-				tcpServer.start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+	    	memberINFO = groupINFO.leaderINFO;
+	    	dlmMembers.addElement(memberINFO);
+	    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
+	    		totalOrder = new TotalOrder(1,textAreaMessageDisplay);
+		    	tcpServer = new TCPServer(dlmMembers,this.groupINFO,totalOrder);
+				tcpServer.start();
+	    	}
 	    }else{
 	    	try {
 	    		String memberName = InetAddress.getLocalHost().getHostName();
-				String memberIP = InetAddress.getLocalHost().getHostAddress(); 
-		    	memberINFO = new MemberINFO(memberName,memberIP,0);
-		    	totalOrder = new TotalOrder(0);
-	    		
+				String memberIP = InetAddress.getLocalHost().getHostAddress();
 				InetAddress leader = InetAddress.getByName(this.groupINFO.leaderINFO.MemberIP);
 				tcpClientSocket = new Socket(leader, Settings.TCP_PORT);
                 tcpClientSender = new TCPClientSender(tcpClientSocket, sender);
-				tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender,dlmMembers
-						,this.groupINFO,memberINFO,totalOrder);
-                tcpClientReader.start();
+		    	memberINFO = new MemberINFO(memberName,memberIP,0);
+		    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
+		    		totalOrder = new TotalOrder(0,textAreaMessageDisplay);
+					tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender,dlmMembers
+							,this.groupINFO,memberINFO,totalOrder);
+	                tcpClientReader.start();
+		    	}else{
+		    		
+		    	}
                 String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_Initial_INFO
                 		+Command.MSG_delimiter+memberINFO.toSendString();
                 tcpClientSender.SendMessage(msg);
@@ -111,17 +117,21 @@ public class ChatRoom extends JFrame implements  ActionListener{
 				e.printStackTrace();
 			}
 	    }
+	    if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
+	    	try {
+				MulticastSocket receive = new MulticastSocket(Settings.BROADCAST_PORT);
+				InetAddress multicastIP=InetAddress.getByName(this.groupINFO.GroupBroadcastIP);
+				receive.joinGroup(multicastIP);
+				//receive.setLoopbackMode(false);//设置本MulticastSocket发送的数据报被回送到自身
+				chatMSGReader = new UDPReader(receive,dlmMembers,totalOrder,this.groupINFO,this.isLeader);
+				chatMSGReader.start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	    }else{
+	    	
+	    }
 	    
-	    try {
-			MulticastSocket receive = new MulticastSocket(Settings.BROADCAST_PORT);
-			InetAddress multicastIP=InetAddress.getByName(this.groupINFO.GroupBroadcastIP);
-			receive.joinGroup(multicastIP);
-			//receive.setLoopbackMode(false);//设置本MulticastSocket发送的数据报被回送到自身
-			chatMSGReader = new UDPReader(receive, textAreaMessageDisplay,this.groupINFO,this.isLeader);
-			chatMSGReader.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 
@@ -129,8 +139,13 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	public void actionPerformed(ActionEvent chatEvent) {
 		if (chatEvent.getSource() == buttonSend){
 			String textMSG = textFieldMessage.getText();
-			//UDPSender sender = new UDPSender();
-			//sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage, textMSG);
+			if(isLeader){
+				
+			}else{
+				totalOrder.setSentMessage(textMSG);
+				String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_SequenceNumber;
+				tcpClientSender.SendMessage(msg);
+			}
 		}else if(chatEvent.getSource() == buttonLeaveGroup){
 			
 			//groupINFO.MembersNumber = 45;

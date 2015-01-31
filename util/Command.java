@@ -29,7 +29,7 @@ public class Command {
 	public static final String Member_Priority = "MemberPriority";
 	public static final String Member_List = "MemberList";
 	public static final String Initial_INFO = "InitialINFO";
-	public static final String Ask_Sequence = "AskSequence";
+	public static final String Ask_SequenceNumber = "AskSequenceNumber";
 	public static final Object SequenceNumber = "SequenceNumber";
 	
 	public static final String Sequence = "Sequence";

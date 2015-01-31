@@ -9,7 +9,6 @@ import java.util.StringTokenizer;
 import javax.swing.DefaultListModel;
 
 import orderType.TotalOrder;
-import resource.Settings;
 import udp.UDPSender;
 import util.Command;
 import util.GroupINFO;
@@ -64,7 +63,7 @@ public class TCPClientReader extends Thread{
 						UDPSender sender = new UDPSender();
 						sender.sendChatData(groupINFO, Command.ChatMSG_Command_NewMember,
 								totalOrder.expectedSeqNum,memberINFO.toSendString());
-					}else if(command.equals(Command.Member_List)){
+					}else if(command.equals(Command.Member_List) && dlmMembers != null){
 						String MemberName = ST.nextToken();
 	                	String MemberIP = ST.nextToken();
 	                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
@@ -72,11 +71,14 @@ public class TCPClientReader extends Thread{
 	                	dlmMembers.addElement(MemberList);
 					}
 				}else if(command.equals(Command.SequenceNumber)){
+					totalOrder.expectedSeqNum = Integer.valueOf(ST.nextToken()).intValue();
+					String msg = totalOrder.getSentMessage();
+					totalOrder.setBufferList(totalOrder.expectedSeqNum, msg);
 					
+					UDPSender sender = new UDPSender();
+					sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage,
+							totalOrder.expectedSeqNum,msg);
 				}
-				else if(command.equals(Command.Sequence)){
-					
-		        }
         	}
         }
     }
