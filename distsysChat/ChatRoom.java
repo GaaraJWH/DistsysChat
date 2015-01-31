@@ -88,7 +88,7 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	    	memberINFO = groupINFO.leaderINFO;
 	    	dlmMembers.addElement(memberINFO);
 	    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
-	    		totalOrder = new TotalOrder(1,textAreaMessageDisplay);
+	    		totalOrder = new TotalOrder(1,textAreaMessageDisplay,dlmMembers);
 		    	tcpServer = new TCPServer(dlmMembers,this.groupINFO,totalOrder);
 				tcpServer.start();
 	    	}
@@ -101,7 +101,7 @@ public class ChatRoom extends JFrame implements  ActionListener{
                 tcpClientSender = new TCPClientSender(tcpClientSocket, sender);
 		    	memberINFO = new MemberINFO(memberName,memberIP,0);
 		    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
-		    		totalOrder = new TotalOrder(0,textAreaMessageDisplay);
+		    		totalOrder = new TotalOrder(0,textAreaMessageDisplay,dlmMembers);
 					tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender,dlmMembers
 							,this.groupINFO,memberINFO,totalOrder);
 	                tcpClientReader.start();
@@ -123,7 +123,7 @@ public class ChatRoom extends JFrame implements  ActionListener{
 				InetAddress multicastIP=InetAddress.getByName(this.groupINFO.GroupBroadcastIP);
 				receive.joinGroup(multicastIP);
 				//receive.setLoopbackMode(false);//设置本MulticastSocket发送的数据报被回送到自身
-				chatMSGReader = new UDPReader(receive,dlmMembers,totalOrder,this.groupINFO,this.isLeader);
+				chatMSGReader = new UDPReader(receive,totalOrder,this.groupINFO,this.isLeader);
 				chatMSGReader.start();
 			} catch (IOException e) {
 				e.printStackTrace();
