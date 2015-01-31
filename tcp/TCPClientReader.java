@@ -6,16 +6,30 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.StringTokenizer;
 
+import javax.swing.DefaultListModel;
+
+import orderType.TotalOrder;
 import resource.Settings;
+import udp.UDPSender;
 import util.Command;
+import util.GroupINFO;
+import util.MemberINFO;
 
 public class TCPClientReader extends Thread{
 	private BufferedReader reader;
     private TCPClientSender sender;
+	private DefaultListModel<MemberINFO> dlmMembers = null;
+	private MemberINFO memberINFO;
+	private TotalOrder totalOrder;
+	private GroupINFO groupINFO;
     
-    public TCPClientReader(Socket socket,TCPClientSender sender){
+    public TCPClientReader(Socket socket,TCPClientSender sender,
+    		DefaultListModel<MemberINFO> dlmMembers, GroupINFO groupINFO, MemberINFO memberINFO, TotalOrder totalOrder){
     	 this.sender = sender;
-         
+         this.dlmMembers = dlmMembers;
+         this.groupINFO =groupINFO;
+         this.memberINFO = memberINFO;
+         this.totalOrder = totalOrder;
          try {
 			reader = new BufferedReader( new InputStreamReader( socket.getInputStream()));
 		} catch (IOException e) {
@@ -43,13 +57,25 @@ public class TCPClientReader extends Thread{
 				ST.nextToken();
 				String command = ST.nextToken();
 				if(command.equals(Command.Initial_INFO)){
-					 
-				}else if(command.equals(Command.Sequence)){
-		            //message = message.replace("Sequence#", "");
-		            //int seqNum = Integer.parseInt(message);
-		            //messageInfo.sequenceNumber = seqNum;
-		            //sender.UDPSendMessage("255.255.255.255", "ChatMessage:@"  + seqNum + "@" + messageInfo.sendingMessage);
-		            //totalOrder.saveMessage(seqNum + "@" + messageInfo.sendingMessage);
+					command = ST.nextToken();
+					if(command.equals(Command.Member_Priority)){
+						memberINFO.MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
+						totalOrder.expectedSeqNum = Integer.valueOf(ST.nextToken()).intValue();
+						UDPSender sender = new UDPSender();
+						sender.sendChatData(groupINFO, Command.ChatMSG_Command_NewMember,
+								totalOrder.expectedSeqNum,memberINFO.toSendString());
+					}else if(command.equals(Command.Member_List)){
+						String MemberName = ST.nextToken();
+	                	String MemberIP = ST.nextToken();
+	                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
+	                	MemberINFO MemberList = new MemberINFO(MemberName,MemberIP,MemberPriority);
+	                	dlmMembers.addElement(MemberList);
+					}
+				}else if(command.equals(Command.SequenceNumber)){
+					
+				}
+				else if(command.equals(Command.Sequence)){
+					
 		        }
         	}
         }

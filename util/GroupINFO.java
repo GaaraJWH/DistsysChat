@@ -13,14 +13,16 @@ public class GroupINFO{
 	public String GroupBroadcastIP;
 	public MemberINFO leaderINFO;
 	public int MembersNumber;
+	public int MembersExpectPriority;
 	
 	public GroupINFO(String GroupName,String GroupOrderType,String GroupBroadcastIP
-			,MemberINFO leaderINFO,int MembersNumber){
+			,MemberINFO leaderINFO, int MembersNumber){
 		this.GroupName = GroupName;
 		this.GroupOrderType = GroupOrderType;
 		this.GroupBroadcastIP = GroupBroadcastIP;
 		this.leaderINFO = leaderINFO;
 		this.MembersNumber = MembersNumber;
+		this.MembersExpectPriority = 1;
 	}
 	
 	public String toString(){

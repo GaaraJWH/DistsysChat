@@ -8,15 +8,25 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.StringTokenizer;
 
+import javax.swing.DefaultListModel;
+
+import orderType.TotalOrder;
 import resource.Settings;
 import util.Command;
+import util.GroupINFO;
+import util.MemberINFO;
 
 public class TCPServerReader extends Thread{
 	private PrintWriter output;
 	private BufferedReader input;
+	DefaultListModel<MemberINFO> dlmMembers = null;
+	private GroupINFO groupINFO;
+	private TotalOrder totalOrder;
 	
-	public TCPServerReader(Socket socket){
-        
+	public TCPServerReader(Socket socket, DefaultListModel<MemberINFO> dlmMembers, GroupINFO groupINFO, TotalOrder totalOrder){
+		this.dlmMembers = dlmMembers;
+		this.groupINFO = groupINFO;
+		this.totalOrder = totalOrder;
         try {
             output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -47,6 +57,16 @@ public class TCPServerReader extends Thread{
 				String command = ST.nextToken();
                 
                 if(command.equals(Command.Ask_Initial_INFO)){
+                	String newMemberName = ST.nextToken();
+                	String newMemberIP = ST.nextToken();
+                	groupINFO.MembersNumber++;
+                	groupINFO.MembersExpectPriority++;
+                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO+Command.MSG_delimiter
+                			+Command.Member_Priority+Command.MSG_delimiter+groupINFO.MembersExpectPriority
+                			+Command.MSG_delimiter+totalOrder.expectedSeqNum;
+                	output.println(msg);
+                	output.flush();
+                	NewMember(newMemberName,newMemberIP);
                 	
                 }else if(command.equals(Command.Ask_Sequence)){
                     output.println("Sequence#" );
@@ -55,4 +75,14 @@ public class TCPServerReader extends Thread{
         	}
         }
     }
+	private void NewMember(String newMemberName, String newMemberIP) {
+    	MemberINFO newMember = new MemberINFO(newMemberName,newMemberIP,groupINFO.MembersExpectPriority);
+    	dlmMembers.addElement(newMember);
+    	for(int i = 0;i<dlmMembers.size();i++){
+    		String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO+Command.MSG_delimiter
+        			+Command.Member_List+Command.MSG_delimiter+dlmMembers.get(i).toSendString();
+        	output.println(msg);
+        	output.flush();
+    	}
+	}
 }

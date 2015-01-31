@@ -49,12 +49,11 @@ public class UDPSender {
 		}
 	}
 	
-	public void sendChatData(GroupINFO groupINFO,String chatCommand,String textMSG ){
+	public void sendChatData(GroupINFO groupINFO,String chatCommand,int expectedSeqNum,String textMSG ){
 		try {
 			sendSocket=new DatagramSocket();
-			String msg = Command.ChatMSG_StartWith+Command.MSG_delimiter
-					+chatCommand+Command.MSG_delimiter
-					+textMSG;
+			String msg = Command.ChatMSG_StartWith+Command.MSG_delimiter+chatCommand
+					+Command.MSG_delimiter+expectedSeqNum+Command.MSG_delimiter+textMSG;
 			byte[] bytebuf=new byte[Settings.DATA_LEN];
 			bytebuf=msg.getBytes();
 			DatagramPacket packet=new DatagramPacket(bytebuf,bytebuf.length,

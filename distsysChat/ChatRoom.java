@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import orderType.TotalOrder;
 import resource.Settings;
 import resource.StringResource;
 import tcp.TCPClientReader;
@@ -40,10 +41,12 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	
 	private Color panelBackground  = new Color(200,230,240);
 	GroupINFO groupINFO;
-	private UDPReader groupINFOReader;
-	private UDPReader chatMSGReader;
+	MemberINFO memberINFO;
+	TotalOrder totalOrder;
 	private boolean isLeader ;
 	
+	private UDPReader groupINFOReader;
+	private UDPReader chatMSGReader;
     private TCPServer tcpServer;
     private Socket tcpClientSocket;
     private TCPClientReader tcpClientReader;
@@ -66,7 +69,14 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	    
 	    //关闭窗口时退出程序
 	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-	    if(isLeader){
+	    CreatSocket();
+	}
+	
+
+	private void CreatSocket() {
+		if(isLeader){
+	    	memberINFO = groupINFO.leaderINFO;
+	    	totalOrder = new TotalOrder(1);
 	    	try {
 				MulticastSocket receive = new MulticastSocket(Settings.BROADCAST_PORT);
 				InetAddress multicastIP=InetAddress.getByName(Settings.GROUPINFO_BROADCAST_IP);
@@ -74,19 +84,26 @@ public class ChatRoom extends JFrame implements  ActionListener{
 				//receive.setLoopbackMode(false);//设置本MulticastSocket发送的数据报被回送到自身
 				groupINFOReader = new UDPReader(receive, textAreaMessageDisplay,this.groupINFO,this.isLeader);
 				groupINFOReader.start();
-				tcpServer = new TCPServer();
+				tcpServer = new TCPServer(dlmMembers,this.groupINFO,totalOrder);
 				tcpServer.start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 	    }else{
 	    	try {
+	    		String memberName = InetAddress.getLocalHost().getHostName();
+				String memberIP = InetAddress.getLocalHost().getHostAddress(); 
+		    	memberINFO = new MemberINFO(memberName,memberIP,0);
+		    	totalOrder = new TotalOrder(0);
+	    		
 				InetAddress leader = InetAddress.getByName(this.groupINFO.leaderINFO.MemberIP);
 				tcpClientSocket = new Socket(leader, Settings.TCP_PORT);
                 tcpClientSender = new TCPClientSender(tcpClientSocket, sender);
-				tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender);
+				tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender,dlmMembers
+						,this.groupINFO,memberINFO,totalOrder);
                 tcpClientReader.start();
-                String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_Initial_INFO;
+                String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_Initial_INFO
+                		+Command.MSG_delimiter+memberINFO.toSendString();
                 tcpClientSender.SendMessage(msg);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
@@ -106,17 +123,15 @@ public class ChatRoom extends JFrame implements  ActionListener{
 			e.printStackTrace();
 		}
 	}
-	
+
 
 	@Override
 	public void actionPerformed(ActionEvent chatEvent) {
 		if (chatEvent.getSource() == buttonSend){
 			String textMSG = textFieldMessage.getText();
-			UDPSender sender = new UDPSender();
-			sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage, textMSG);
+			//UDPSender sender = new UDPSender();
+			//sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage, textMSG);
 		}else if(chatEvent.getSource() == buttonLeaveGroup){
-			String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_Initial_INFO;
-			tcpClientSender.SendMessage(msg);
 			
 			//groupINFO.MembersNumber = 45;
 			//UDPSender sender = new UDPSender();
