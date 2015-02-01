@@ -25,12 +25,13 @@ public class Command {
 	
 	//TCP
 	public static final String TCP_StartWith = "ClientServerMSG";
-	public static final String Ask_Initial_INFO = "AskInitialINFO";
-	public static final String Member_Priority = "MemberPriority";
-	public static final String Member_List = "MemberList";
-	public static final String Initial_INFO = "InitialINFO";
-	public static final String Ask_SequenceNumber = "AskSequenceNumber";
-	public static final Object SequenceNumber = "SequenceNumber";
+	public static final String TCP_Ask_Initial_INFO = "AskInitialINFO";
+	public static final String TCP_Member_Priority = "MemberPriority";
+	public static final String TCP_Member_List = "MemberList";
+	public static final String TCP_Initial_INFO = "InitialINFO";
+	public static final String TCP_Ask_SequenceNumber = "AskSequenceNumber";
+	public static final String TCP_SequenceNumber = "SequenceNumber";
+	public static final String TCP_LeaveGroup = "LeaveGroup";
 	
 	public static final String Sequence = "Sequence";
 

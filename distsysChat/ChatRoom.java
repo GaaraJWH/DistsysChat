@@ -88,7 +88,7 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	    	memberINFO = groupINFO.leaderINFO;
 	    	dlmMembers.addElement(memberINFO);
 	    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
-	    		totalOrder = new TotalOrder(1,textAreaMessageDisplay,dlmMembers);
+	    		totalOrder = new TotalOrder(1,groupINFO,textAreaMessageDisplay,dlmMembers);
 		    	tcpServer = new TCPServer(dlmMembers,this.groupINFO,totalOrder);
 				tcpServer.start();
 	    	}
@@ -101,14 +101,14 @@ public class ChatRoom extends JFrame implements  ActionListener{
                 tcpClientSender = new TCPClientSender(tcpClientSocket, sender);
 		    	memberINFO = new MemberINFO(memberName,memberIP,0);
 		    	if(groupINFO.GroupOrderType.equals(Settings.TotalOrderType)){
-		    		totalOrder = new TotalOrder(0,textAreaMessageDisplay,dlmMembers);
+		    		totalOrder = new TotalOrder(0,groupINFO,textAreaMessageDisplay,dlmMembers);
 					tcpClientReader = new TCPClientReader(tcpClientSocket, tcpClientSender,dlmMembers
 							,this.groupINFO,memberINFO,totalOrder);
 	                tcpClientReader.start();
 		    	}else{
 		    		
 		    	}
-                String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_Initial_INFO
+                String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_Ask_Initial_INFO
                 		+Command.MSG_delimiter+memberINFO.toSendString();
                 tcpClientSender.SendMessage(msg);
 			} catch (UnknownHostException e) {
@@ -139,18 +139,34 @@ public class ChatRoom extends JFrame implements  ActionListener{
 	public void actionPerformed(ActionEvent chatEvent) {
 		if (chatEvent.getSource() == buttonSend){
 			String textMSG = textFieldMessage.getText();
-			if(isLeader){
+			textFieldMessage.setText("");
+			if(textMSG.equals("")){
 				
 			}else{
-				totalOrder.setSentMessage(textMSG);
-				String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Ask_SequenceNumber;
-				tcpClientSender.SendMessage(msg);
+				if(isLeader){
+					int seqNum = totalOrder.totalSeqNum++;
+					totalOrder.setAllSentMessage(seqNum, textMSG);
+					UDPSender sender = new UDPSender();
+					sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage,seqNum,textMSG);
+				}else{
+					totalOrder.setSendMessage(textMSG);
+					String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_Ask_SequenceNumber;
+					tcpClientSender.SendMessage(msg);
+				}
 			}
 		}else if(chatEvent.getSource() == buttonLeaveGroup){
+			LeaveGroup();
+		}
+	}
+	
+	private void LeaveGroup(){
+		if(isLeader){
 			
-			//groupINFO.MembersNumber = 45;
-			//UDPSender sender = new UDPSender();
-			//sender.sendGroupData(groupINFO, Command.GroupMSG_Command_ModifyGroup, Settings.GROUPINFO_BROADCAST_IP);
+		}else{
+			 String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_LeaveGroup
+             		+Command.MSG_delimiter+memberINFO.toSendString();
+             tcpClientSender.SendMessage(msg);
+             System.exit(0);
 		}
 	}
 	

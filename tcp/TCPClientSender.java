@@ -31,4 +31,12 @@ public class TCPClientSender {
             sender.flush();
         }
     }
+	public void Close() {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }

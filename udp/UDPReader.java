@@ -3,10 +3,10 @@ package udp;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JTextArea;
 
 import orderType.TotalOrder;
 import resource.Settings;
@@ -71,12 +71,11 @@ public class UDPReader extends Thread{
 	}
 	
 	public void handleMessage(DatagramPacket packet) {
-		String sendIP=packet.getAddress().getHostAddress().toString();  
 		String recvMsg=new String(packet.getData(),0,packet.getLength());
-		System.out.println(this.getClass().toString()+sendIP+"   "+recvMsg);
 		StringTokenizer ST;
 		if(recvMsg != null){
 			if(recvMsg.startsWith(Command.GroupMSG_StartWith)  ){
+				System.out.println(this.getClass().toString()+"   "+recvMsg);
 				ST = new StringTokenizer(recvMsg,Command.MSG_delimiter);
 				ST.nextToken();
 				String command = ST.nextToken();
@@ -145,10 +144,19 @@ public class UDPReader extends Thread{
 							,Settings.GROUPINFO_BROADCAST_IP);
 				}
 			}else if(recvMsg.startsWith(Command.ChatMSG_StartWith)){
+				/**
+				 * ¸ÅÂÊ¶ª°ü²âÊÔ
+				 */
+				/**Random random = new Random(System.currentTimeMillis());
+				if(random.nextInt(100) < 50){
+					return;
+				}
+				*/
+				System.out.println(this.getClass().toString()+"   "+recvMsg);
 				ST = new StringTokenizer(recvMsg,Command.MSG_delimiter);
 				ST.nextToken();
 				String command = ST.nextToken();
-				if( command.equals(Command.ChatMSG_Command_ChatMessage)&&totalOrder != null){
+				if( command.equals(Command.ChatMSG_Command_ChatMessage)&&totalOrder != null){					
 					int seqNum = Integer.valueOf(ST.nextToken()).intValue();
                 	String message = ST.nextToken();
 					totalOrder.DisplayMessage(seqNum, message);
@@ -159,6 +167,16 @@ public class UDPReader extends Thread{
                 	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
                 	MemberINFO NewMember = new MemberINFO(MemberName,MemberIP,MemberPriority);
                 	totalOrder.AddNewMember(seqNum, NewMember);
+				}else if(command.equals(Command.ChatMSG_Command_LeaveGroup) && totalOrder != null){
+					int seqNum = Integer.valueOf(ST.nextToken()).intValue();
+					String MemberName = ST.nextToken();
+                	String MemberIP = ST.nextToken();
+                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
+                	MemberINFO deleteMember = new MemberINFO(MemberName,MemberIP,MemberPriority);
+                	totalOrder.DeleteMember(seqNum, deleteMember);
+				}else if(command.equals(Command.ChatMSG_Command_MessageMiss) && totalOrder != null){
+					int seqNum = Integer.valueOf(ST.nextToken()).intValue();
+					totalOrder.retransmit(seqNum);
 				}
 			}
 		}

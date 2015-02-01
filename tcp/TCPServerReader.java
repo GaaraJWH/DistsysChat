@@ -11,6 +11,8 @@ import java.util.StringTokenizer;
 import javax.swing.DefaultListModel;
 
 import orderType.TotalOrder;
+import resource.Settings;
+import udp.UDPSender;
 import util.Command;
 import util.GroupINFO;
 import util.MemberINFO;
@@ -22,7 +24,8 @@ public class TCPServerReader extends Thread{
 	private GroupINFO groupINFO;
 	private TotalOrder totalOrder;
 	
-	public TCPServerReader(Socket socket, DefaultListModel<MemberINFO> dlmMembers, GroupINFO groupINFO, TotalOrder totalOrder){
+	public TCPServerReader(Socket socket, DefaultListModel<MemberINFO> dlmMembers
+			, GroupINFO groupINFO, TotalOrder totalOrder){
 		this.dlmMembers = dlmMembers;
 		this.groupINFO = groupINFO;
 		this.totalOrder = totalOrder;
@@ -54,27 +57,45 @@ public class TCPServerReader extends Thread{
 				ST.nextToken();
 				String command = ST.nextToken();
                 
-                if(command.equals(Command.Ask_Initial_INFO)){
+                if(command.equals(Command.TCP_Ask_Initial_INFO)){
                 	groupINFO.MembersNumber++;
                 	groupINFO.MembersExpectPriority++;
                 	for(int i = 0;i<dlmMembers.size();i++){
-                		String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO
-                				+Command.MSG_delimiter+Command.Member_List+Command.MSG_delimiter
+                		String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_Initial_INFO
+                				+Command.MSG_delimiter+Command.TCP_Member_List+Command.MSG_delimiter
                 				+dlmMembers.get(i).toSendString();
                     	output.println(msg);
                     	output.flush();
                 	}
                 	
-                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.Initial_INFO+Command.MSG_delimiter
-                			+Command.Member_Priority+Command.MSG_delimiter+groupINFO.MembersExpectPriority
-                			+Command.MSG_delimiter+(totalOrder.expectedSeqNum+1);
+                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_Initial_INFO
+                			+Command.MSG_delimiter+Command.TCP_Member_Priority+Command.MSG_delimiter
+                			+groupINFO.MembersExpectPriority+Command.MSG_delimiter+(totalOrder.totalSeqNum++);
                 	output.println(msg);
                 	output.flush();
                 	
-                	
-                }else if(command.equals(Command.Ask_SequenceNumber)){
-                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.SequenceNumber
-                			+Command.MSG_delimiter+(totalOrder.expectedSeqNum+1);
+                	UDPSender sender = new UDPSender();
+        			sender.sendGroupData(groupINFO, Command.GroupMSG_Command_ModifyGroup,
+        					Settings.GROUPINFO_BROADCAST_IP);
+                }else if(command.equals(Command.TCP_LeaveGroup)){
+                	groupINFO.MembersNumber--;
+                	String MemberName = ST.nextToken();
+                	String MemberIP = ST.nextToken();
+                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
+                	MemberINFO leaveMember = new MemberINFO(MemberName,MemberIP,MemberPriority);
+                	int seqNum = totalOrder.totalSeqNum++;
+					totalOrder.setAllSentMessage(seqNum, Command.ChatMSG_Command_LeaveGroup
+							+Command.MSG_delimiter+leaveMember.toSendString());
+					
+					UDPSender sender = new UDPSender();
+					sender.sendChatData(groupINFO, Command.ChatMSG_Command_LeaveGroup
+							,seqNum,leaveMember.toSendString());
+					
+        			sender.sendGroupData(groupINFO, Command.GroupMSG_Command_ModifyGroup,
+        					Settings.GROUPINFO_BROADCAST_IP);
+                }else if(command.equals(Command.TCP_Ask_SequenceNumber)){
+                	String msg = Command.TCP_StartWith+Command.MSG_delimiter+Command.TCP_SequenceNumber
+                			+Command.MSG_delimiter+(totalOrder.totalSeqNum++);
                     output.println(msg);
                     output.flush();
                 }

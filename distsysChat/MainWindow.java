@@ -95,6 +95,7 @@ public class MainWindow extends JFrame implements  ActionListener{
 						
 						new ChatRoom(newGroup,true);
 						reader.stop();
+						this.setVisible(false);
 					} catch (UnknownHostException e) {
 						e.printStackTrace();
 					}
@@ -111,6 +112,7 @@ public class MainWindow extends JFrame implements  ActionListener{
 			if(selectGroupINFO != null){
 				new ChatRoom(selectGroupINFO,false);
 				reader.stop();
+				this.setVisible(false);
 			}else{
 				JOptionPane.showMessageDialog(this,StringResource.groupSelectError,
 						StringResource.errorMessageDialogTittle,JOptionPane.ERROR_MESSAGE); 

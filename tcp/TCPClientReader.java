@@ -55,29 +55,28 @@ public class TCPClientReader extends Thread{
                 ST = new StringTokenizer(message,Command.MSG_delimiter);
 				ST.nextToken();
 				String command = ST.nextToken();
-				if(command.equals(Command.Initial_INFO)){
+				if(command.equals(Command.TCP_Initial_INFO)){
 					command = ST.nextToken();
-					if(command.equals(Command.Member_Priority)){
+					if(command.equals(Command.TCP_Member_Priority)){
 						memberINFO.MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
-						totalOrder.expectedSeqNum = Integer.valueOf(ST.nextToken()).intValue();
+						int seqNum = Integer.valueOf(ST.nextToken()).intValue();
+						totalOrder.setExpectedSeqNum(seqNum);
 						UDPSender sender = new UDPSender();
 						sender.sendChatData(groupINFO, Command.ChatMSG_Command_NewMember,
-								totalOrder.expectedSeqNum,memberINFO.toSendString());
-					}else if(command.equals(Command.Member_List) && dlmMembers != null){
+								seqNum,memberINFO.toSendString());
+					}else if(command.equals(Command.TCP_Member_List) && dlmMembers != null){
 						String MemberName = ST.nextToken();
 	                	String MemberIP = ST.nextToken();
 	                	int MemberPriority = Integer.valueOf(ST.nextToken()).intValue();
 	                	MemberINFO MemberList = new MemberINFO(MemberName,MemberIP,MemberPriority);
 	                	dlmMembers.addElement(MemberList);
 					}
-				}else if(command.equals(Command.SequenceNumber)){
-					totalOrder.expectedSeqNum = Integer.valueOf(ST.nextToken()).intValue();
-					String msg = totalOrder.getSentMessage();
-					totalOrder.setBufferList(totalOrder.expectedSeqNum, msg);
-					
+				}else if(command.equals(Command.TCP_SequenceNumber)){
+					int seqNum = Integer.valueOf(ST.nextToken()).intValue();
+					String msg = totalOrder.getSendMessage();
+					totalOrder.setAllSentMessage(seqNum, msg);
 					UDPSender sender = new UDPSender();
-					sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage,
-							totalOrder.expectedSeqNum,msg);
+					sender.sendChatData(groupINFO, Command.ChatMSG_Command_ChatMessage,seqNum,msg);
 				}
         	}
         }

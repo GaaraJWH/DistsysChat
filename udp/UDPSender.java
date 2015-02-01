@@ -50,6 +50,7 @@ public class UDPSender {
 	}
 	
 	public void sendChatData(GroupINFO groupINFO,String chatCommand,int expectedSeqNum,String textMSG ){
+		
 		try {
 			sendSocket=new DatagramSocket();
 			String msg = Command.ChatMSG_StartWith+Command.MSG_delimiter+chatCommand
@@ -58,7 +59,7 @@ public class UDPSender {
 			bytebuf=msg.getBytes();
 			DatagramPacket packet=new DatagramPacket(bytebuf,bytebuf.length,
 										InetAddress.getByName(groupINFO.GroupBroadcastIP),Settings.BROADCAST_PORT);
-			
+			System.out.println(this.getClass().toString()+"   MSG:"+msg);
 			sendSocket.send(packet);
 			sendSocket.close();
 		} catch (IOException e) {
